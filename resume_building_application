@@ -1,0 +1,76 @@
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+public class ResumeBuilderApp extends Application {
+
+    @Override
+    public void start(Stage primaryStage) {
+        VBox root = new VBox();
+        ComboBox<String> templateComboBox = new ComboBox<>();
+        templateComboBox.getItems().addAll("Template 1", "Template 2", "Template 3");
+
+        TextField nameField = new TextField();
+        nameField.setPromptText("Enter your name");
+
+        TextField contactField = new TextField();
+        contactField.setPromptText("Enter your contact info");
+
+        Button exportButton = new Button("Export Resume");
+        exportButton.setOnAction(event -> {
+            String name = nameField.getText();
+            String contact = contactField.getText();
+
+            // Open a file chooser to select the location and filename for the DOCX file
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Word Documents", "*.docx"));
+            File file = fileChooser.showSaveDialog(primaryStage);
+
+            if (file != null) {
+                try {
+                    // Export resume to DOCX
+                    exportToDocx(file.getAbsolutePath(), name, contact);
+                    System.out.println("Resume exported to " + file.getAbsolutePath());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        root.getChildren().addAll(templateComboBox, nameField, contactField, exportButton);
+
+        Scene scene = new Scene(root, 400, 300);
+        primaryStage.setTitle("Resume Builder");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+
+    // Method to export resume to DOCX
+    private void exportToDocx(String filePath, String name, String contact) throws IOException {
+        try (XWPFDocument document = new XWPFDocument()) {
+            XWPFParagraph paragraph = document.createParagraph();
+            paragraph.createRun().setText("Name: " + name);
+            paragraph.createRun().addBreak();
+            paragraph.createRun().setText("Contact: " + contact);
+
+            try (FileOutputStream out = new FileOutputStream(filePath)) {
+                document.write(out);
+            }
+        }
+    }
+}
